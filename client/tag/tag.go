@@ -4,7 +4,6 @@ import (
 	"github.com/Hugal31/mePicture/database"
 	"os"
 	"fmt"
-	"sort"
 )
 
 func usage() {
@@ -24,7 +23,6 @@ func usage() {
 func ListTags() {
 	db := database.Open()
 	tags := db.ListTags()
-	sort.Strings(tags)
 	for _, name := range tags {
 		println(name)
 	}

@@ -41,5 +41,7 @@ func main() {
 	case "tag":
 		tag.CommandTag(flag.Args()[1:])
 		break
+	default:
+		usage()
 	}
 }
