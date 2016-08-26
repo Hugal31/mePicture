@@ -20,7 +20,11 @@ func usage() {
 		"The commands are:\n"+
 		"\n"+
 		"\tadd target tagName...      Tag pictures\n"+
-		"\tlist [tagName...]          List pictures, filter with the tags given in parameter")
+		"\tlist [tagName...]          List pictures, filter with the tags given in parameter\n" +
+		"\tremove target tagName...   Remove tags from picture\n" +
+		"\tdelete target...           Remove all tags from target\n" +
+		"\n" +
+		"target:  Image file or directory")
 	os.Exit(1)
 }
 
@@ -34,13 +38,10 @@ func PictureAddTags(path string, tags []string) {
 	if _, err := os.Stat(path); err != nil {
 		log.Fatal(err)
 	}
-	rel, err := getPicturePath(path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s is not in the picture root\n", path)
-	}
-	db.AddPicture(rel)
+	rel := getPicturePath(path)
+	pic := db.PictureAdd(rel)
 
-	db.AddTagPicture(rel, tags)
+	db.PictureAddTags(&pic, tags)
 }
 
 // Handler for list command
@@ -55,6 +56,12 @@ func CommandPicture(args []string) {
 		break
 	case "list":
 		pictureListCommand(args[1:])
+		break
+	case "remove":
+		pictureRemoveCommand(args[1:])
+		break
+	case "delete":
+		pictureDeleteCommand(args[1:])
 		break
 	default:
 		usage()
@@ -91,10 +98,43 @@ func pictureListCommand(args []string) {
 	}
 }
 
-func getPicturePath(path string) (string, error) {
+func pictureRemoveCommand(args []string) {
+	if len(args) < 2 {
+		usage()
+	}
+
+	db := database.Open()
+	defer db.Close()
+
+	pic := db.PictureFromPath(getPicturePath(args[0]))
+
+	for _, tagName := range args[1:] {
+		t := db.TagFromName(tagName)
+		db.PictureRemoveTag(pic, t)
+	}
+}
+
+func pictureDeleteCommand(args []string) {
+	if len(args) < 1 {
+		usage()
+	}
+
+	db := database.Open()
+	defer db.Close()
+
+	pic := db.PictureFromPath(getPicturePath(args[0]))
+
+	db.PictureDelete(pic)
+}
+
+func getPicturePath(path string) string {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return filepath.Rel(config.GetConfig().PicturesRoot, path)
+	rel, err := filepath.Rel(config.GetConfig().PicturesRoot, path)
+	if err != nil {
+		log.Fatalf("%s is not in the picture root\n", path)
+	}
+	return rel
 }

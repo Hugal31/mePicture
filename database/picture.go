@@ -9,6 +9,42 @@ import (
 	"github.com/Hugal31/mePicture/tag"
 )
 
+func (db *DB) getPictureId(picture string) (pictureId int) {
+	err := db.sql.QueryRow("SELECT id FROM picture WHERE path = ?", picture).Scan(&pictureId)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
+func (db *DB) getPictureName(pictureId int) (picture string) {
+	err := db.sql.QueryRow("SELECT path FROM picture WHERE id = ?", pictureId).Scan(&picture)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
+func (db *DB) fillPictureTags(pic *picture.Picture) {
+	// Retrieve tags
+	tagRows, err := db.sql.Query("SELECT tag_id FROM picture_tag WHERE picture_id=?", pic.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for tagRows.Next() {
+		var t tag.Tag
+		tagRows.Scan(&t.Id)
+		t.Name = db.getTagName(t.Id)
+		pic.Tags = append(pic.Tags, t)
+	}
+}
+
+func (db *DB) PictureFromPath(path string) picture.Picture {
+	pic := picture.Picture{Id:db.getPictureId(path), Name:path}
+	db.fillPictureTags(&pic)
+	return pic
+}
+
 func (db *DB) ListPicture() picture.PictureSlice {
 	var pictures picture.PictureSlice
 
@@ -85,11 +121,12 @@ func (db *DB) ListPictureWithTags(tags []string) picture.PictureSlice {
 	return pics
 }
 
-func (db *DB) AddPicture(picture string) {
-	db.AddPictures([]string{picture})
+func (db *DB) PictureAdd(path string) picture.Picture {
+	db.PicturesAdd([]string{path})
+	return db.PictureFromPath(path)
 }
 
-func (db *DB) AddPictures(pictures []string) {
+func (db *DB) PicturesAdd(pictures []string) {
 	tx, err := db.sql.Begin()
 	if err != nil {
 		log.Fatal(err)
@@ -105,4 +142,38 @@ func (db *DB) AddPictures(pictures []string) {
 		stmt.Exec(pic)
 	}
 	tx.Commit()
+}
+
+func (db *DB) PictureDelete(pic picture.Picture) {
+	db.sql.Exec("DELETE FROM picture_tag WHERE picture_id = ?;" +
+		"DELETE FROM picture WHERE id = ?", pic.Id, pic.Id)
+}
+
+func (db *DB) PictureAddTags(pic *picture.Picture, tags []string) {
+	for _, tagName := range tags {
+		isFound := false
+		for _, picTag := range pic.Tags {
+			if strings.ToLower(picTag.Name) == strings.ToLower(tagName) {
+				isFound = true
+				break
+			}
+		}
+		if !isFound {
+			db.addLink(pic.Id, db.getTagId(tagName))
+			pic.Tags = append(pic.Tags, db.TagFromName(tagName))
+		}
+	}
+}
+
+func (db *DB) PictureRemoveTag(pic picture.Picture, t tag.Tag) {
+	for i := 0; i < pic.Tags.Len(); i++ {
+		if pic.Tags[i].Id == t.Id {
+			db.removeLink(pic.Id, t.Id)
+			pic.Tags = append(pic.Tags[:i], pic.Tags[i+1:]...)
+			break
+		}
+	}
+	if len(pic.Tags) == 0 {
+		db.PictureDelete(pic)
+	}
 }

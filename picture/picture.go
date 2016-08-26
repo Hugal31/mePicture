@@ -5,7 +5,7 @@ import "github.com/Hugal31/mePicture/tag"
 type Picture struct {
 	Id   int
 	Name string
-	Tags []tag.Tag
+	Tags tag.TagSlice
 }
 
 type PictureSlice []Picture

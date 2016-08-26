@@ -38,58 +38,12 @@ func (db *DB) init() {
 	}
 }
 
-func (db *DB) getPictureId(picture string) (pictureId int) {
-	err := db.sql.QueryRow("SELECT id FROM picture WHERE path = ?", picture).Scan(&pictureId)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
-
-func (db *DB) getPictureName(pictureId int) (picture string) {
-	err := db.sql.QueryRow("SELECT path FROM picture WHERE id = ?", pictureId).Scan(&picture)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
-
-func (db *DB) getTagId(tag string) (tagId int) {
-	err := db.sql.QueryRow("SELECT id FROM tag WHERE name = ?", tag).Scan(&tagId)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
-
-func (db *DB) getTagName(tagId int) (tag string) {
-	err := db.sql.QueryRow("SELECT name FROM tag WHERE id = ?", tagId).Scan(&tag)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
-
 func (db *DB) addLink(pictureId int, tagId int) {
 	db.sql.Exec("INSERT INTO picture_tag(picture_id, tag_id) VALUES (?, ?)", pictureId, tagId)
 }
 
-func (db *DB) AddTagPicture(picture string, tags []string) {
-	pictureId := db.getPictureId(picture)
-
-	stmt, err := db.sql.Prepare("SELECT id FROM tag WHERE name = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer stmt.Close()
-	for _, tag := range tags {
-		var tagId int
-		err := stmt.QueryRow(tag).Scan(&tagId)
-		if err != nil {
-			log.Fatal(err)
-		}
-		db.addLink(pictureId, tagId)
-	}
+func (db *DB) removeLink(pictureId int, tagId int) {
+	db.sql.Exec("DELETE FROM picture_tag WHERE picture_id=? AND tag_id=?", pictureId, tagId)
 }
 
 func (db *DB) Close() {
