@@ -1,9 +1,10 @@
 package tag
 
 import (
-	"github.com/Hugal31/mePicture/database"
-	"os"
 	"fmt"
+	"os"
+
+	"github.com/Hugal31/mePicture/database"
 )
 
 func usage() {
@@ -22,11 +23,12 @@ func usage() {
 
 func ListTags() {
 	db := database.Open()
-	tags := db.ListTags()
-	for _, name := range tags {
-		println(name)
-	}
 	defer db.Close()
+
+	tags := db.ListTags()
+	for _, tag := range tags {
+		println(tag.Name)
+	}
 }
 
 func listTagsCommand([]string) {

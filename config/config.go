@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/user"
-	"log"
+
 	"github.com/BurntSushi/toml"
 )
 

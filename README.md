@@ -4,7 +4,7 @@ Picture tagging and wallpaper slideshow management application
 
 ## TODO
 
-- Separe picture and tag package from commands handling
+- Try optimisation by passing pictures and tags with pointers
 - Add ```tag add tagName [pictures...]```
 - Add ```picture remove target... tag``` for remove tag on pictures
 - Add ```picture delete target...``` for remove all tags on a picture

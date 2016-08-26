@@ -7,6 +7,7 @@ import (
 	"os"
 	"github.com/Hugal31/mePicture/database"
 	"github.com/Hugal31/mePicture/config"
+	"github.com/Hugal31/mePicture/picture"
 )
 
 func usage() {
@@ -71,20 +72,19 @@ func pictureListCommand(args []string) {
 	db := database.Open()
 	defer db.Close()
 
-	var pictures []string
+	var pictures picture.PictureSlice
 	if len(args) != 0 {
 		pictures = db.ListPictureWithTags(args)
 	} else {
 		pictures = db.ListPicture()
 	}
-	for _, picture := range pictures {
-		tags := db.ListPictureTags(picture)
-		fmt.Print(picture, "\t\t")
-		for i, tag :=  range tags {
+	for _, pic := range pictures {
+		fmt.Print(pic.Name, "\t\t")
+		for i, tag :=  range pic.Tags {
 			if i == 0 {
-				fmt.Print(tag)
+				fmt.Print(tag.Name)
 			} else {
-				fmt.Printf(", %s", tag)
+				fmt.Printf(", %s", tag.Name)
 			}
 		}
 		fmt.Println()

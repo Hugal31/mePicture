@@ -4,8 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"github.com/Hugal31/mePicture/client/picture"
-	"github.com/Hugal31/mePicture/client/tag"
+
+	"github.com/Hugal31/mePicture/command/picture"
+	"github.com/Hugal31/mePicture/command/tag"
 )
 
 var help bool
