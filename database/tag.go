@@ -24,7 +24,7 @@ func (db *DB) getTagName(tagId int) (tag string) {
 }
 
 func (db *DB) TagFromName(name string) tag.Tag {
-	t := tag.Tag{Name:name}
+	t := tag.Tag{Name: name}
 	t.Id = db.getTagId(name)
 	return t
 }

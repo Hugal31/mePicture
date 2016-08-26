@@ -2,8 +2,8 @@ package database
 
 import (
 	"log"
-	"strings"
 	"sort"
+	"strings"
 
 	"github.com/Hugal31/mePicture/picture"
 	"github.com/Hugal31/mePicture/tag"
@@ -40,7 +40,7 @@ func (db *DB) fillPictureTags(pic *picture.Picture) {
 }
 
 func (db *DB) PictureFromPath(path string) picture.Picture {
-	pic := picture.Picture{Id:db.getPictureId(path), Name:path}
+	pic := picture.Picture{Id: db.getPictureId(path), Name: path}
 	db.fillPictureTags(&pic)
 	return pic
 }
@@ -92,7 +92,7 @@ func (db *DB) ListPicture() picture.PictureSlice {
 		args[i] = v
 	}
 	rows, err := db.sql.Query(statement, args...)
- */
+*/
 
 // TODO Optimise
 // TODO Use filter
@@ -145,7 +145,7 @@ func (db *DB) PicturesAdd(pictures []string) {
 }
 
 func (db *DB) PictureDelete(pic picture.Picture) {
-	db.sql.Exec("DELETE FROM picture_tag WHERE picture_id = ?;" +
+	db.sql.Exec("DELETE FROM picture_tag WHERE picture_id = ?;"+
 		"DELETE FROM picture WHERE id = ?", pic.Id, pic.Id)
 }
 

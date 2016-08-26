@@ -1,12 +1,13 @@
 package picture
 
 import (
-	"path/filepath"
 	"fmt"
 	"log"
 	"os"
-	"github.com/Hugal31/mePicture/database"
+	"path/filepath"
+
 	"github.com/Hugal31/mePicture/config"
+	"github.com/Hugal31/mePicture/database"
 	"github.com/Hugal31/mePicture/picture"
 )
 
@@ -20,10 +21,10 @@ func usage() {
 		"The commands are:\n"+
 		"\n"+
 		"\tadd target tagName...      Tag pictures\n"+
-		"\tlist [tagName...]          List pictures, filter with the tags given in parameter\n" +
-		"\tremove target tagName...   Remove tags from picture\n" +
-		"\tdelete target...           Remove all tags from target\n" +
-		"\n" +
+		"\tlist [tagName...]          List pictures, filter with the tags given in parameter\n"+
+		"\tremove target tagName...   Remove tags from picture\n"+
+		"\tdelete target...           Remove all tags from target\n"+
+		"\n"+
 		"target:  Image file or directory")
 	os.Exit(1)
 }
@@ -87,7 +88,7 @@ func pictureListCommand(args []string) {
 	}
 	for _, pic := range pictures {
 		fmt.Print(pic.Name, "\t\t")
-		for i, tag :=  range pic.Tags {
+		for i, tag := range pic.Tags {
 			if i == 0 {
 				fmt.Print(tag.Name)
 			} else {
