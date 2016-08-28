@@ -4,7 +4,7 @@ Picture tagging and wallpaper slideshow management application
 
 ## TODO
 
-- Try optimisation by passing pictures and tags with pointers
+- Use boolean expression like ```TAG1 && (TAG2 || TAG3) && !TAG4```
 - Add ```tag add tagName [pictures...]```
 - Add ```picture remove target... tag``` for remove tag on pictures
 - Add ```picture delete target...``` for remove all tags on a picture

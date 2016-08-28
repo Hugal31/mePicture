@@ -1,4 +1,4 @@
-package picture
+package command
 
 import (
 	"fmt"
@@ -9,9 +9,10 @@ import (
 	"github.com/Hugal31/mePicture/config"
 	"github.com/Hugal31/mePicture/database"
 	"github.com/Hugal31/mePicture/picture"
+	"github.com/Hugal31/mePicture/tag"
 )
 
-func usage() {
+func pictureUsage() {
 	fmt.Fprintln(os.Stderr, "Manage pictures\n"+
 		"\n"+
 		"Usage:\n"+
@@ -29,26 +30,10 @@ func usage() {
 	os.Exit(1)
 }
 
-func PictureAddTags(path string, tags []string) {
-	db := database.Open()
-	defer db.Close()
-
-	db.AddTags(tags)
-
-	// TODO Check if is not a directory
-	if _, err := os.Stat(path); err != nil {
-		log.Fatal(err)
-	}
-	rel := getPicturePath(path)
-	pic := db.PictureAdd(rel)
-
-	db.PictureAddTags(&pic, tags)
-}
-
 // Handler for list command
 func CommandPicture(args []string) {
 	if len(args) == 0 {
-		usage()
+		pictureUsage()
 	}
 
 	switch args[0] {
@@ -65,13 +50,36 @@ func CommandPicture(args []string) {
 		pictureDeleteCommand(args[1:])
 		break
 	default:
-		usage()
+		pictureUsage()
 	}
+}
+
+func PictureAddTags(path string, tagNames []string) {
+	for _, tagName := range tagNames {
+		if !tag.IsValid(tagName) {
+			fmt.Fprintln(os.Stderr, "A tag name cannot contain the characters &, |, ( and )")
+			os.Exit(1)
+		}
+	}
+
+	db := database.Open()
+	defer db.Close()
+
+	db.AddTags(tagNames)
+
+	// TODO Check if is not a directory
+	if _, err := os.Stat(path); err != nil {
+		log.Fatal(err)
+	}
+	rel := getPicturePath(path)
+	pic := db.PictureAdd(rel)
+
+	db.PictureAddTags(&pic, tagNames)
 }
 
 func pictureAddCommand(args []string) {
 	if len(args) < 2 {
-		usage()
+		pictureUsage()
 	}
 	PictureAddTags(args[0], args[1:])
 }
@@ -101,7 +109,7 @@ func pictureListCommand(args []string) {
 
 func pictureRemoveCommand(args []string) {
 	if len(args) < 2 {
-		usage()
+		pictureUsage()
 	}
 
 	db := database.Open()
@@ -117,7 +125,7 @@ func pictureRemoveCommand(args []string) {
 
 func pictureDeleteCommand(args []string) {
 	if len(args) < 1 {
-		usage()
+		pictureUsage()
 	}
 
 	db := database.Open()

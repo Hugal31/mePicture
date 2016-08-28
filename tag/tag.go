@@ -5,6 +5,15 @@ type Tag struct {
 	Name string
 }
 
+func IsValid(name string) bool {
+	for _, c := range name {
+		if c == '&' || c == '|' || c == '(' || c == ')' {
+			return false
+		}
+	}
+	return true
+}
+
 type TagSlice []Tag
 
 func (tags TagSlice) Len() int {

@@ -1,13 +1,14 @@
-package tag
+package command
 
 import (
 	"fmt"
 	"os"
 
 	"github.com/Hugal31/mePicture/database"
+	"github.com/Hugal31/mePicture/tag"
 )
 
-func usage() {
+func tagUsage() {
 	fmt.Fprintln(os.Stderr, "Manage tags\n"+
 		"\n"+
 		"Usage:\n"+
@@ -19,6 +20,15 @@ func usage() {
 		"\tadd tagName...      Add a tag\n"+
 		"\tlist                List tags")
 	os.Exit(1)
+}
+
+func checkTagNames(tagNames []string) {
+	for _, tagName := range tagNames {
+		if !tag.IsValid(tagName) {
+			fmt.Fprintln(os.Stderr, "A tag name cannot contain the characters &, |, ( and )")
+			os.Exit(1)
+		}
+	}
 }
 
 func ListTags() {
@@ -35,13 +45,9 @@ func listTagsCommand([]string) {
 	ListTags()
 }
 
-func AddTag(tagName string) {
-	db := database.Open()
-	defer db.Close()
-	db.AddTag(tagName)
-}
-
 func AddTags(tagNames []string) {
+	checkTagNames(tagNames)
+
 	db := database.Open()
 	defer db.Close()
 	db.AddTags(tagNames)
@@ -49,14 +55,14 @@ func AddTags(tagNames []string) {
 
 func addTagCommand(args []string) {
 	if len(args) == 0 {
-		usage() // TODO Usage spécifique de la commande add ?
+		tagUsage()
 	}
 	AddTags(args)
 }
 
 func CommandTag(args []string) {
 	if len(args) == 0 {
-		usage()
+		tagUsage()
 	}
 	switch args[0] {
 	case "list":
@@ -66,6 +72,6 @@ func CommandTag(args []string) {
 		addTagCommand(args[1:])
 		break
 	default:
-		usage()
+		tagUsage()
 	}
 }

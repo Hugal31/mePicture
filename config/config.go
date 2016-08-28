@@ -14,9 +14,12 @@ type Config struct {
 	PicturesRoot string
 }
 
-var config *Config = readConfig()
+var config *Config
 
 func GetConfig() *Config {
+	if config == nil {
+		config = readConfig()
+	}
 	return config
 }
 

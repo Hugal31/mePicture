@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Hugal31/mePicture/command/picture"
-	"github.com/Hugal31/mePicture/command/tag"
+	"github.com/Hugal31/mePicture/command"
 )
 
 var help bool
@@ -37,10 +36,10 @@ func main() {
 
 	switch flag.Arg(0) {
 	case "picture":
-		picture.CommandPicture(flag.Args()[1:])
+		command.CommandPicture(flag.Args()[1:])
 		break
 	case "tag":
-		tag.CommandTag(flag.Args()[1:])
+		command.CommandTag(flag.Args()[1:])
 		break
 	default:
 		usage()
