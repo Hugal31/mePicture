@@ -2,14 +2,12 @@ package command
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/Hugal31/mePicture/config"
 	"github.com/Hugal31/mePicture/database"
 	"github.com/Hugal31/mePicture/picture"
-	"github.com/Hugal31/mePicture/tag"
 )
 
 func pictureUsage() {
@@ -55,11 +53,16 @@ func CommandPicture(args []string) {
 }
 
 func PictureAddTags(path string, tagNames []string) {
-	for _, tagName := range tagNames {
-		if !tag.IsValid(tagName) {
-			fmt.Fprintln(os.Stderr, "A tag name cannot contain the characters &, |, ( and )")
-			os.Exit(1)
-		}
+	checkTagNames(tagNames)
+
+	stat, err := os.Stat(path)
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
+	}
+	if stat.IsDir() { // TODO Add all image files in the directory
+		fmt.Fprintf(os.Stderr, "%s is a directory\n", path)
+		os.Exit(1)
 	}
 
 	db := database.Open()
@@ -67,10 +70,6 @@ func PictureAddTags(path string, tagNames []string) {
 
 	db.AddTags(tagNames)
 
-	// TODO Check if is not a directory
-	if _, err := os.Stat(path); err != nil {
-		log.Fatal(err)
-	}
 	rel := getPicturePath(path)
 	pic := db.PictureAdd(rel)
 
@@ -115,7 +114,8 @@ func pictureRemoveCommand(args []string) {
 	db := database.Open()
 	defer db.Close()
 
-	pic := db.PictureFromPath(getPicturePath(args[0]))
+	path := getPicturePath(args[0])
+	pic := db.PictureFromPath(path)
 
 	for _, tagName := range args[1:] {
 		t := db.TagFromName(tagName)
@@ -131,19 +131,21 @@ func pictureDeleteCommand(args []string) {
 	db := database.Open()
 	defer db.Close()
 
-	pic := db.PictureFromPath(getPicturePath(args[0]))
-
+	path := getPicturePath(args[0])
+	pic := db.PictureFromPath(path)
 	db.PictureDelete(pic)
 }
 
 func getPicturePath(path string) string {
 	path, err := filepath.Abs(path)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
 	}
 	rel, err := filepath.Rel(config.GetConfig().PicturesRoot, path)
 	if err != nil {
-		log.Fatalf("%s is not in the picture root\n", path)
+		fmt.Fprintf(os.Stderr, "%s is not in the picture root\n", path)
+		os.Exit(1)
 	}
 	return rel
 }

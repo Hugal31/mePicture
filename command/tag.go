@@ -25,7 +25,7 @@ func tagUsage() {
 func checkTagNames(tagNames []string) {
 	for _, tagName := range tagNames {
 		if !tag.IsValid(tagName) {
-			fmt.Fprintln(os.Stderr, "A tag name cannot contain the characters &, |, ( and )")
+			fmt.Fprintln(os.Stderr, "A tag name cannot contain the characters ' ', '&', '|', '(' and ')'")
 			os.Exit(1)
 		}
 	}
@@ -36,8 +36,8 @@ func ListTags() {
 	defer db.Close()
 
 	tags := db.ListTags()
-	for _, tag := range tags {
-		println(tag.Name)
+	for _, t := range tags {
+		println(t.Name)
 	}
 }
 
