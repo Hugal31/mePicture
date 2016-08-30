@@ -50,7 +50,7 @@ func readConfig() *Config {
 func (conf *Config) Save() {
 	file, err := os.OpenFile(getConfigFileName(), os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	encoder := toml.NewEncoder(file)

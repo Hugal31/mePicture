@@ -8,7 +8,7 @@ import (
 )
 
 func (db *DB) getTagId(tag string) (tagId int) {
-	err := db.sql.QueryRow("SELECT id FROM tag WHERE name = ?", tag).Scan(&tagId)
+	err := db.queryRow("SELECT id FROM tag WHERE name = ?", tag).Scan(&tagId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -16,7 +16,7 @@ func (db *DB) getTagId(tag string) (tagId int) {
 }
 
 func (db *DB) getTagName(tagId int) (tag string) {
-	err := db.sql.QueryRow("SELECT name FROM tag WHERE id = ?", tagId).Scan(&tag)
+	err := db.queryRow("SELECT name FROM tag WHERE id = ?", tagId).Scan(&tag)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func (db *DB) TagFromName(name string) tag.Tag {
 func (db *DB) ListTags() tag.TagSlice {
 	var tags tag.TagSlice
 
-	rows, err := db.sql.Query("SELECT id,name FROM tag")
+	rows, err := db.query("SELECT id,name FROM tag")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,12 +59,7 @@ func (db *DB) AddTag(tagName string) {
 }
 
 func (db *DB) AddTags(tagNames []string) {
-	tx, err := db.sql.Begin()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	stmt, err := tx.Prepare("INSERT INTO tag(name) VALUES (?)")
+	stmt, err := db.prepare("INSERT INTO tag(name) VALUES (?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,5 +68,4 @@ func (db *DB) AddTags(tagNames []string) {
 	for _, tagName := range tagNames {
 		stmt.Exec(tagName)
 	}
-	tx.Commit()
 }

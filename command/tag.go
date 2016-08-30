@@ -50,7 +50,9 @@ func AddTags(tagNames []string) {
 
 	db := database.Open()
 	defer db.Close()
+	db.Begin()
 	db.AddTags(tagNames)
+	db.Commit()
 }
 
 func addTagCommand(args []string) {

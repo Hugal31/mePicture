@@ -10,7 +10,7 @@ import (
 )
 
 func (db *DB) getPictureId(picture string) (pictureId int) {
-	err := db.sql.QueryRow("SELECT id FROM picture WHERE path = ?", picture).Scan(&pictureId)
+	err := db.queryRow("SELECT id FROM picture WHERE path = ?", picture).Scan(&pictureId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -18,7 +18,7 @@ func (db *DB) getPictureId(picture string) (pictureId int) {
 }
 
 func (db *DB) getPictureName(pictureId int) (picture string) {
-	err := db.sql.QueryRow("SELECT path FROM picture WHERE id = ?", pictureId).Scan(&picture)
+	err := db.queryRow("SELECT path FROM picture WHERE id = ?", pictureId).Scan(&picture)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func (db *DB) getPictureName(pictureId int) (picture string) {
 
 func (db *DB) fillPictureTags(pic *picture.Picture) {
 	// Retrieve tags
-	tagRows, err := db.sql.Query("SELECT tag_id FROM picture_tag WHERE picture_id=?", pic.Id)
+	tagRows, err := db.query("SELECT tag_id FROM picture_tag WHERE picture_id=?", pic.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,7 +48,7 @@ func (db *DB) PictureFromPath(path string) picture.Picture {
 func (db *DB) ListPicture() picture.PictureSlice {
 	var pictures picture.PictureSlice
 
-	rows, err := db.sql.Query("SELECT id,path FROM picture")
+	rows, err := db.query("SELECT id,path FROM picture")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func (db *DB) ListPicture() picture.PictureSlice {
 		}
 
 		// Retrieve tags
-		tagRows, err := db.sql.Query("SELECT tag_id FROM picture_tag WHERE picture_id=?", pic.Id)
+		tagRows, err := db.query("SELECT tag_id FROM picture_tag WHERE picture_id=?", pic.Id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -91,7 +91,7 @@ func (db *DB) ListPicture() picture.PictureSlice {
 	for i, v := range tags {
 		args[i] = v
 	}
-	rows, err := db.sql.Query(statement, args...)
+	rows, err := db.Query(statement, args...)
 */
 
 // TODO Optimise
@@ -127,12 +127,7 @@ func (db *DB) PictureAdd(path string) picture.Picture {
 }
 
 func (db *DB) PicturesAdd(pictures []string) {
-	tx, err := db.sql.Begin()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	stmt, err := db.sql.Prepare("INSERT INTO picture(path) VALUES (?)")
+	stmt, err := db.prepare("INSERT INTO picture(path) VALUES (?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -141,11 +136,10 @@ func (db *DB) PicturesAdd(pictures []string) {
 	for _, pic := range pictures {
 		stmt.Exec(pic)
 	}
-	tx.Commit()
 }
 
 func (db *DB) PictureDelete(pic picture.Picture) {
-	db.sql.Exec("DELETE FROM picture_tag WHERE picture_id = ?;"+
+	db.exec("DELETE FROM picture_tag WHERE picture_id = ?;"+
 		"DELETE FROM picture WHERE id = ?", pic.Id, pic.Id)
 }
 

@@ -57,7 +57,7 @@ func addFileTags(path string, file os.FileInfo, tagNames []string, db *database.
 	if file.IsDir() {
 		subFiles, err := ioutil.ReadDir(path)
 		if err != nil {
-			fmt.Fprint(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 		for _, subfile := range subFiles {
@@ -70,22 +70,22 @@ func addFileTags(path string, file os.FileInfo, tagNames []string, db *database.
 	}
 }
 
-// TODO Use transaction in db
 func PictureAddTags(path string, tagNames []string) {
 	checkTagNames(tagNames)
 
 	file, err := os.Stat(path)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	db := database.Open()
 	defer db.Close()
 
+	db.Begin()
 	db.AddTags(tagNames)
-
 	addFileTags(path, file, tagNames, db)
+	db.Commit()
 }
 
 func pictureAddCommand(args []string) {
@@ -151,7 +151,7 @@ func pictureDeleteCommand(args []string) {
 func getPicturePath(path string) string {
 	path, err := filepath.Abs(path)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	rel, err := filepath.Rel(config.GetConfig().PicturesRoot, path)
