@@ -97,7 +97,7 @@ func pictureAddCommand(args []string) {
 	PictureAddTags(args[0], args[1:])
 }
 
-func PictureList(displayTags, fullPath bool, tags []string) {
+func PictureList(tags []string) {
 	db := database.Open()
 	defer db.Close()
 
@@ -108,12 +108,12 @@ func PictureList(displayTags, fullPath bool, tags []string) {
 		pictures = db.ListPicture()
 	}
 	for _, pic := range pictures {
-		if fullPath {
+		if displayFullPath {
 			fmt.Printf("%s%c%s", config.GetConfig().PicturesRoot, os.PathSeparator, pic.Name)
 		} else {
 			fmt.Print(pic.Name)
 		}
-		if displayTags {
+		if !hideTagNames {
 			fmt.Print(", \t\t")
 			for i, tag := range pic.Tags {
 				if i == 0 {
@@ -128,24 +128,7 @@ func PictureList(displayTags, fullPath bool, tags []string) {
 }
 
 func pictureListCommand(args []string) {
-	// Check if the '-p' or '-f' flag is present
-	// TODO Use a real argument parser
-	displayTags := true
-	fullPath := false
-	for i := 0; i < len(args); {
-		if args[i] == "-p" {
-			displayTags = false
-			args = append(args[:i], args[i+1:]...)
-		} else if args[i] == "-f" {
-			fullPath = true
-			args = append(args[:i], args[i+1:]...)
-		} else if len(args[i]) > 0 && args[i][0] == '-' {
-
-		} else {
-			i++
-		}
-	}
-	PictureList(displayTags, fullPath, args)
+	PictureList(args)
 }
 
 func pictureRemoveCommand(args []string) {
