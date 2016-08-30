@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -52,16 +53,30 @@ func CommandPicture(args []string) {
 	}
 }
 
+func addFileTags(path string, file os.FileInfo, tagNames []string, db *database.DB) {
+	if file.IsDir() {
+		subFiles, err := ioutil.ReadDir(path)
+		if err != nil {
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(1)
+		}
+		for _, subfile := range subFiles {
+			addFileTags(path+string(os.PathSeparator)+subfile.Name(), subfile, tagNames, db)
+		}
+	} else if filepath.Ext(path) == ".png" || filepath.Ext(path) == ".jpg" { // TODO Refactor
+		rel := getPicturePath(path)
+		pic := db.PictureAdd(rel)
+		db.PictureAddTags(&pic, tagNames)
+	}
+}
+
+// TODO Use transaction in db
 func PictureAddTags(path string, tagNames []string) {
 	checkTagNames(tagNames)
 
-	stat, err := os.Stat(path)
+	file, err := os.Stat(path)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-	if stat.IsDir() { // TODO Add all image files in the directory
-		fmt.Fprintf(os.Stderr, "%s is a directory\n", path)
 		os.Exit(1)
 	}
 
@@ -70,10 +85,7 @@ func PictureAddTags(path string, tagNames []string) {
 
 	db.AddTags(tagNames)
 
-	rel := getPicturePath(path)
-	pic := db.PictureAdd(rel)
-
-	db.PictureAddTags(&pic, tagNames)
+	addFileTags(path, file, tagNames, db)
 }
 
 func pictureAddCommand(args []string) {
