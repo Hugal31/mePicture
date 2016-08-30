@@ -20,10 +20,12 @@ func pictureUsage() {
 		"\n"+
 		"The commands are:\n"+
 		"\n"+
-		"\tadd target tagName...      Tag pictures\n"+
-		"\tlist [tagName...]          List pictures, filter with the tags given in parameter\n"+
-		"\tremove target tagName...   Remove tags from picture\n"+
-		"\tdelete target...           Remove all tags from target\n"+
+		"\tadd target tagName...        Tag pictures\n"+
+		"\tlist [-p] [-f] [tagName...]  List pictures, filter with the tags given in parameter\n"+
+		"\t                             Add -p to prevent the display of tag namse\n"+
+		"\t                             Add -f to show full path\n"+
+		"\tremove target tagName...     Remove tags from picture\n"+
+		"\tdelete target...             Remove all tags from target\n"+
 		"\n"+
 		"target:  Image file or directory")
 	os.Exit(1)
@@ -95,27 +97,55 @@ func pictureAddCommand(args []string) {
 	PictureAddTags(args[0], args[1:])
 }
 
-func pictureListCommand(args []string) {
+func PictureList(displayTags, fullPath bool, tags []string) {
 	db := database.Open()
 	defer db.Close()
 
 	var pictures picture.PictureSlice
-	if len(args) != 0 {
-		pictures = db.ListPictureWithTags(args)
+	if len(tags) != 0 {
+		pictures = db.ListPictureWithTags(tags)
 	} else {
 		pictures = db.ListPicture()
 	}
 	for _, pic := range pictures {
-		fmt.Print(pic.Name, "\t\t")
-		for i, tag := range pic.Tags {
-			if i == 0 {
-				fmt.Print(tag.Name)
-			} else {
-				fmt.Printf(", %s", tag.Name)
+		if fullPath {
+			fmt.Printf("%s%c%s", config.GetConfig().PicturesRoot, os.PathSeparator, pic.Name)
+		} else {
+			fmt.Print(pic.Name)
+		}
+		if displayTags {
+			fmt.Print(", \t\t")
+			for i, tag := range pic.Tags {
+				if i == 0 {
+					fmt.Print(tag.Name)
+				} else {
+					fmt.Printf(", %s", tag.Name)
+				}
 			}
 		}
 		fmt.Println()
 	}
+}
+
+func pictureListCommand(args []string) {
+	// Check if the '-p' or '-f' flag is present
+	// TODO Use a real argument parser
+	displayTags := true
+	fullPath := false
+	for i := 0; i < len(args); {
+		if args[i] == "-p" {
+			displayTags = false
+			args = append(args[:i], args[i+1:]...)
+		} else if args[i] == "-f" {
+			fullPath = true
+			args = append(args[:i], args[i+1:]...)
+		} else if len(args[i]) > 0 && args[i][0] == '-' {
+
+		} else {
+			i++
+		}
+	}
+	PictureList(displayTags, fullPath, args)
 }
 
 func pictureRemoveCommand(args []string) {

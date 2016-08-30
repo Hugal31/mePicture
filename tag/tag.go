@@ -7,7 +7,7 @@ type Tag struct {
 
 func IsValid(name string) bool {
 	for _, c := range name {
-		if c == ' ' || c == '&' || c == '|' || c == '(' || c == ')' {
+		if c == ' ' || c == '&' || c == '|' || c == '(' || c == ')' || c == '-' {
 			return false
 		}
 	}
