@@ -1,16 +1,19 @@
 package database
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"sort"
 
 	"github.com/Hugal31/mePicture/tag"
 )
 
-func (db *DB) getTagId(tag string) (tagId int) {
-	err := db.queryRow("SELECT id FROM tag WHERE name = ?", tag).Scan(&tagId)
+func (db *DB) getTagId(tagName string) (tagId int) {
+	err := db.queryRow("SELECT id FROM tag WHERE name = ?", tagName).Scan(&tagId)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Tag %s doesn't exists\n", tagName)
+		os.Exit(1)
 	}
 	return
 }
@@ -18,7 +21,8 @@ func (db *DB) getTagId(tag string) (tagId int) {
 func (db *DB) getTagName(tagId int) (tag string) {
 	err := db.queryRow("SELECT name FROM tag WHERE id = ?", tagId).Scan(&tag)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 	return
 }
@@ -68,4 +72,23 @@ func (db *DB) AddTags(tagNames []string) {
 	for _, tagName := range tagNames {
 		stmt.Exec(tagName)
 	}
+}
+
+// Get all the pictures which have this tag and perform PictureRemoveTag on it
+// Then, delete the tag
+func (db *DB) TagDelete(t tag.Tag) {
+	rows, err := db.query("SELECT picture_id FROM picture_tag WHERE tag_id = ?", t.Id)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	for rows.Next() {
+		var pictureId int
+		rows.Scan(&pictureId)
+		pic := db.PictureFromId(pictureId)
+		db.PictureRemoveTag(pic, t)
+	}
+
+	db.exec("DELETE FROM tag WHERE id = ?", t.Id)
 }

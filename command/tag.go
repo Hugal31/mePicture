@@ -18,7 +18,8 @@ func tagUsage() {
 		"The commands are:\n"+
 		"\n"+
 		"\tadd tagName...      Add a tag\n"+
-		"\tlist                List tags")
+		"\tlist                List tags\n"+
+		"\tdelete tagName...   Delete tags")
 	os.Exit(1)
 }
 
@@ -62,6 +63,25 @@ func addTagCommand(args []string) {
 	AddTags(args)
 }
 
+func DeleteTagNames(tagNames []string) {
+	db := database.Open()
+	defer db.Close()
+
+	db.Begin()
+	for _, tagName := range tagNames {
+		t := db.TagFromName(tagName)
+		db.TagDelete(t)
+	}
+	db.Commit()
+}
+
+func deleteTagsCommand(args []string) {
+	if len(args) == 0 {
+		tagUsage()
+	}
+	DeleteTagNames(args)
+}
+
 func CommandTag(args []string) {
 	if len(args) == 0 {
 		tagUsage()
@@ -72,6 +92,9 @@ func CommandTag(args []string) {
 		break
 	case "add":
 		addTagCommand(args[1:])
+		break
+	case "delete":
+		deleteTagsCommand(args[1:])
 		break
 	default:
 		tagUsage()

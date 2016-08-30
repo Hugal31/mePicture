@@ -1,7 +1,9 @@
 package database
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"sort"
 	"strings"
 
@@ -9,10 +11,11 @@ import (
 	"github.com/Hugal31/mePicture/tag"
 )
 
-func (db *DB) getPictureId(picture string) (pictureId int) {
-	err := db.queryRow("SELECT id FROM picture WHERE path = ?", picture).Scan(&pictureId)
+func (db *DB) getPictureId(path string) (pictureId int) {
+	err := db.queryRow("SELECT id FROM picture WHERE path = ?", path).Scan(&pictureId)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Picture %s doesn't exists\n", path)
+		os.Exit(1)
 	}
 	return
 }
@@ -20,7 +23,8 @@ func (db *DB) getPictureId(picture string) (pictureId int) {
 func (db *DB) getPictureName(pictureId int) (picture string) {
 	err := db.queryRow("SELECT path FROM picture WHERE id = ?", pictureId).Scan(&picture)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 	return
 }
@@ -41,6 +45,12 @@ func (db *DB) fillPictureTags(pic *picture.Picture) {
 
 func (db *DB) PictureFromPath(path string) picture.Picture {
 	pic := picture.Picture{Id: db.getPictureId(path), Name: path}
+	db.fillPictureTags(&pic)
+	return pic
+}
+
+func (db *DB) PictureFromId(id int) picture.Picture {
+	pic := picture.Picture{Id: id, Name: db.getPictureName(id)}
 	db.fillPictureTags(&pic)
 	return pic
 }
