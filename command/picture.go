@@ -55,7 +55,13 @@ func CommandPicture(args []string) {
 	}
 }
 
-func addFileTags(path string, file os.FileInfo, tagNames []string, db *database.DB) {
+func addPictureTag(path string, tagNames []string, db *database.DB) {
+	rel := getPicturePath(path)
+	pic := db.PictureAdd(rel)
+	db.PictureAddTags(&pic, tagNames)
+}
+
+func walk(path string, file os.FileInfo, tagNames []string, db *database.DB, f func(string, []string, *database.DB)) {
 	if file.IsDir() {
 		subFiles, err := ioutil.ReadDir(path)
 		if err != nil {
@@ -63,12 +69,10 @@ func addFileTags(path string, file os.FileInfo, tagNames []string, db *database.
 			os.Exit(1)
 		}
 		for _, subfile := range subFiles {
-			addFileTags(path+string(os.PathSeparator)+subfile.Name(), subfile, tagNames, db)
+			walk(path+string(os.PathSeparator)+subfile.Name(), subfile, tagNames, db, f)
 		}
-	} else if filepath.Ext(path) == ".png" || filepath.Ext(path) == ".jpg" { // TODO Refactor
-		rel := getPicturePath(path)
-		pic := db.PictureAdd(rel)
-		db.PictureAddTags(&pic, tagNames)
+	} else if filepath.Ext(path) == ".png" || filepath.Ext(path) == ".jpg" {
+		f(path, tagNames, db)
 	}
 }
 
@@ -86,7 +90,7 @@ func PictureAddTags(path string, tagNames []string) {
 
 	db.Begin()
 	db.AddTags(tagNames)
-	addFileTags(path, file, tagNames, db)
+	walk(path, file, tagNames, db, addPictureTag)
 	db.Commit()
 }
 
@@ -131,21 +135,33 @@ func pictureListCommand(args []string) {
 	PictureList(args)
 }
 
+func pictureRemoveTags(path string, tagNames []string, db *database.DB) {
+	rel := getPicturePath(path)
+	pic := db.PictureFromPath(rel)
+
+	for _, tagName := range tagNames {
+		t := db.TagFromName(tagName)
+		db.PictureRemoveTag(pic, t)
+	}
+}
+
 func pictureRemoveCommand(args []string) {
 	if len(args) < 2 {
 		pictureUsage()
 	}
 
+	file, err := os.Stat(args[0])
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	db := database.Open()
 	defer db.Close()
 
-	path := getPicturePath(args[0])
-	pic := db.PictureFromPath(path)
-
-	for _, tagName := range args[1:] {
-		t := db.TagFromName(tagName)
-		db.PictureRemoveTag(pic, t)
-	}
+	db.Begin()
+	walk(args[0], file, args[1:], db, pictureRemoveTags)
+	db.Commit()
 }
 
 func pictureDeleteCommand(args []string) {
