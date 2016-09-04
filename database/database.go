@@ -7,6 +7,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/Hugal31/mePicture/config"
+	"github.com/Hugal31/mePicture/picture"
+	"github.com/Hugal31/mePicture/tag"
 )
 
 type DB struct {
@@ -94,10 +96,10 @@ func (db *DB) exec(query string, args ...interface{}) (result sql.Result, err er
 	return
 }
 
-func (db *DB) addLink(pictureId int, tagId int) {
-	db.exec("INSERT INTO picture_tag(picture_id, tag_id) VALUES (?, ?)", pictureId, tagId)
+func (db *DB) addLink(pic *picture.Picture, t *tag.Tag) {
+	db.exec("INSERT INTO picture_tag(picture_id, tag_id) VALUES (?, ?)", pic.Id, t.Id)
 }
 
-func (db *DB) removeLink(pictureId int, tagId int) {
-	db.exec("DELETE FROM picture_tag WHERE picture_id=? AND tag_id=?", pictureId, tagId)
+func (db *DB) removeLink(pic *picture.Picture, t *tag.Tag) {
+	db.exec("DELETE FROM picture_tag WHERE picture_id=? AND tag_id=?", pic.Id, t.Id)
 }

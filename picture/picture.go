@@ -8,6 +8,14 @@ type Picture struct {
 	Tags tag.TagSlice
 }
 
+func IsValidExt(ext string) bool {
+	switch ext {
+	case ".png", ".jpg":
+		return true
+	}
+	return false
+}
+
 type PictureSlice []Picture
 
 func (tags PictureSlice) Len() int {

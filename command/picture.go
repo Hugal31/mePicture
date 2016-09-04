@@ -9,6 +9,7 @@ import (
 	"github.com/Hugal31/mePicture/config"
 	"github.com/Hugal31/mePicture/database"
 	"github.com/Hugal31/mePicture/picture"
+	"github.com/Hugal31/mePicture/tag"
 )
 
 func pictureUsage() {
@@ -55,13 +56,13 @@ func CommandPicture(args []string) {
 	}
 }
 
-func addPictureTag(path string, tagNames []string, db *database.DB) {
+func addPictureTag(path string, tags tag.TagSlice, db *database.DB) {
 	rel := getPicturePath(path)
 	pic := db.PictureAdd(rel)
-	db.PictureAddTags(&pic, tagNames)
+	db.PictureAddTags(&pic, tags)
 }
 
-func walk(path string, file os.FileInfo, tagNames []string, db *database.DB, f func(string, []string, *database.DB)) {
+func walk(path string, file os.FileInfo, tags tag.TagSlice, db *database.DB, f func(string, tag.TagSlice, *database.DB)) {
 	if file.IsDir() {
 		subFiles, err := ioutil.ReadDir(path)
 		if err != nil {
@@ -69,10 +70,10 @@ func walk(path string, file os.FileInfo, tagNames []string, db *database.DB, f f
 			os.Exit(1)
 		}
 		for _, subfile := range subFiles {
-			walk(path+string(os.PathSeparator)+subfile.Name(), subfile, tagNames, db, f)
+			walk(path+string(os.PathSeparator)+subfile.Name(), subfile, tags, db, f)
 		}
-	} else if filepath.Ext(path) == ".png" || filepath.Ext(path) == ".jpg" {
-		f(path, tagNames, db)
+	} else if picture.IsValidExt(filepath.Ext(path)) {
+		f(path, tags, db)
 	}
 }
 
@@ -90,7 +91,8 @@ func PictureAddTags(path string, tagNames []string) {
 
 	db.Begin()
 	db.AddTags(tagNames)
-	walk(path, file, tagNames, db, addPictureTag)
+	tags := db.TagsFromNames(tagNames)
+	walk(path, file, tags, db, addPictureTag)
 	db.Commit()
 }
 
@@ -119,11 +121,11 @@ func PictureList(tags []string) {
 		}
 		if !hideTagNames {
 			fmt.Print(", \t\t")
-			for i, tag := range pic.Tags {
+			for i, t := range pic.Tags {
 				if i == 0 {
-					fmt.Print(tag.Name)
+					fmt.Print(t.Name)
 				} else {
-					fmt.Printf(", %s", tag.Name)
+					fmt.Printf(", %s", t.Name)
 				}
 			}
 		}
@@ -135,22 +137,17 @@ func pictureListCommand(args []string) {
 	PictureList(args)
 }
 
-func pictureRemoveTags(path string, tagNames []string, db *database.DB) {
+func pictureRemoveTags(path string, tags tag.TagSlice, db *database.DB) {
 	rel := getPicturePath(path)
 	pic := db.PictureFromPath(rel)
 
-	for _, tagName := range tagNames {
-		t := db.TagFromName(tagName)
-		db.PictureRemoveTag(pic, t)
+	for _, t := range tags {
+		db.PictureRemoveTag(&pic, &t)
 	}
 }
 
-func pictureRemoveCommand(args []string) {
-	if len(args) < 2 {
-		pictureUsage()
-	}
-
-	file, err := os.Stat(args[0])
+func PictureRemoveTags(path string, tagNames []string) {
+	file, err := os.Stat(path)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -160,8 +157,17 @@ func pictureRemoveCommand(args []string) {
 	defer db.Close()
 
 	db.Begin()
-	walk(args[0], file, args[1:], db, pictureRemoveTags)
+	tags := db.TagsFromNames(tagNames)
+	walk(path, file, tags, db, pictureRemoveTags)
 	db.Commit()
+}
+
+func pictureRemoveCommand(args []string) {
+	if len(args) < 2 {
+		pictureUsage()
+	}
+
+	PictureRemoveTags(args[0], args[1:])
 }
 
 func pictureDeleteCommand(args []string) { // TODO Implement recursive
@@ -175,7 +181,7 @@ func pictureDeleteCommand(args []string) { // TODO Implement recursive
 	for _, path := range args {
 		path := getPicturePath(path)
 		pic := db.PictureFromPath(path)
-		db.PictureDelete(pic)
+		db.PictureDelete(&pic)
 	}
 }
 

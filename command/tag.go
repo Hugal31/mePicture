@@ -38,7 +38,7 @@ func ListTags() {
 
 	tags := db.ListTags()
 	for _, t := range tags {
-		println(t.Name)
+		fmt.Println(t.Name)
 	}
 }
 

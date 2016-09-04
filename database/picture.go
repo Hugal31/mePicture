@@ -148,31 +148,31 @@ func (db *DB) PicturesAdd(pictures []string) {
 	}
 }
 
-func (db *DB) PictureDelete(pic picture.Picture) {
+func (db *DB) PictureDelete(pic *picture.Picture) {
 	db.exec("DELETE FROM picture_tag WHERE picture_id = ?;"+
 		"DELETE FROM picture WHERE id = ?", pic.Id, pic.Id)
 }
 
-func (db *DB) PictureAddTags(pic *picture.Picture, tags []string) {
-	for _, tagName := range tags {
+func (db *DB) PictureAddTags(pic *picture.Picture, tags tag.TagSlice) {
+	for _, t := range tags {
 		isFound := false
 		for _, picTag := range pic.Tags {
-			if strings.ToLower(picTag.Name) == strings.ToLower(tagName) {
+			if picTag.Id == t.Id {
 				isFound = true
 				break
 			}
 		}
 		if !isFound {
-			db.addLink(pic.Id, db.getTagId(tagName))
-			pic.Tags = append(pic.Tags, db.TagFromName(tagName))
+			db.addLink(pic, &t)
+			pic.Tags = append(pic.Tags, t)
 		}
 	}
 }
 
-func (db *DB) PictureRemoveTag(pic picture.Picture, t tag.Tag) {
+func (db *DB) PictureRemoveTag(pic *picture.Picture, t *tag.Tag) {
 	for i := 0; i < pic.Tags.Len(); i++ {
 		if pic.Tags[i].Id == t.Id {
-			db.removeLink(pic.Id, t.Id)
+			db.removeLink(pic, t)
 			pic.Tags = append(pic.Tags[:i], pic.Tags[i+1:]...)
 			break
 		}

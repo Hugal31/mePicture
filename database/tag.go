@@ -33,6 +33,14 @@ func (db *DB) TagFromName(name string) tag.Tag {
 	return t
 }
 
+func (db *DB) TagsFromNames(tagNames []string) tag.TagSlice {
+	tags := make(tag.TagSlice, 0, len(tagNames))
+	for _, tagName := range tagNames {
+		tags = append(tags, db.TagFromName(tagName))
+	}
+	return tags
+}
+
 func (db *DB) ListTags() tag.TagSlice {
 	var tags tag.TagSlice
 
@@ -58,8 +66,9 @@ func (db *DB) ListTags() tag.TagSlice {
 	return tags
 }
 
-func (db *DB) AddTag(tagName string) {
+func (db *DB) AddTag(tagName string) tag.Tag {
 	db.AddTags([]string{tagName})
+	return db.TagFromName(tagName)
 }
 
 func (db *DB) AddTags(tagNames []string) {
@@ -87,7 +96,7 @@ func (db *DB) TagDelete(t tag.Tag) {
 		var pictureId int
 		rows.Scan(&pictureId)
 		pic := db.PictureFromId(pictureId)
-		db.PictureRemoveTag(pic, t)
+		db.PictureRemoveTag(&pic, &t)
 	}
 
 	db.exec("DELETE FROM tag WHERE id = ?", t.Id)
