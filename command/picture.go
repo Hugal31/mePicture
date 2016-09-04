@@ -164,7 +164,7 @@ func pictureRemoveCommand(args []string) {
 	db.Commit()
 }
 
-func pictureDeleteCommand(args []string) {
+func pictureDeleteCommand(args []string) { // TODO Implement recursive
 	if len(args) < 1 {
 		pictureUsage()
 	}
@@ -172,9 +172,11 @@ func pictureDeleteCommand(args []string) {
 	db := database.Open()
 	defer db.Close()
 
-	path := getPicturePath(args[0])
-	pic := db.PictureFromPath(path)
-	db.PictureDelete(pic)
+	for _, path := range args {
+		path := getPicturePath(path)
+		pic := db.PictureFromPath(path)
+		db.PictureDelete(pic)
+	}
 }
 
 func getPicturePath(path string) string {
