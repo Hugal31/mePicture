@@ -12,7 +12,7 @@ var hideTagNames bool
 var displayFullPath bool
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "mePicture is a tool for managing pictures with tag and settup wallpapers slideshows\n"+
+	fmt.Fprintln(os.Stderr, "mePicture is a tool for managing pictures with tag and setup wallpapers slideshows\n"+
 		"\n"+
 		"Usage:\n"+
 		"\n"+
